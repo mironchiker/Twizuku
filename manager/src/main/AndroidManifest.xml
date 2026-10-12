@@ -4,8 +4,10 @@
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission
         android:name="android.permission.WRITE_SECURE_SETTINGS"
         tools:ignore="ProtectedPermissions" />
@@ -81,13 +83,21 @@
         </activity>
 
         <!-- ============================================ -->
-        <!-- НОВАЯ ACTIVITY ДЛЯ LADB                        -->
+        <!-- LADB: Activity терминала                     -->
         <!-- ============================================ -->
         <activity
             android:name=".ladb.LadbActivity"
             android:exported="false"
             android:label="LADB"
             android:theme="@style/AppTheme" />
+
+        <!-- ============================================ -->
+        <!-- LADB: плавающее окно сопряжения              -->
+        <!-- ============================================ -->
+        <service
+            android:name=".ladb.PairingOverlayService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse" />
 
         <activity
             android:name=".management.ApplicationManagementActivity"
