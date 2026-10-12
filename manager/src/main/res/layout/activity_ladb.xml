@@ -4,17 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="?android:attr/colorBackground">
+    android:background="#121212">
 
     <!-- Топбар -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorSurface"
-        app:navigationIcon="@drawable/ic_arrow_back"
+        android:background="#1E1E1E"
+        app:navigationIcon="@android:drawable/ic_menu_close_clear_cancel"
         app:title="LADB"
-        app:titleTextColor="?android:attr/textColorPrimary"/>
+        app:titleTextColor="#EDEDED"/>
 
     <!-- Область вывода -->
     <ScrollView
@@ -41,7 +41,7 @@
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?attr/colorSurfaceVariant"
+        android:background="#2A2A2A"
         android:paddingHorizontal="8dp"
         android:paddingVertical="4dp"
         android:scrollbars="none">
@@ -53,14 +53,12 @@
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipPm"
-                style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="pm"/>
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipSettings"
-                style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
@@ -68,7 +66,6 @@
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipAm"
-                style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
@@ -76,7 +73,6 @@
 
             <com.google.android.material.chip.Chip
                 android:id="@+id/chipClear"
-                style="@style/Widget.Material3.Chip.Assist"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
@@ -84,12 +80,21 @@
         </LinearLayout>
     </HorizontalScrollView>
 
+    <!-- Кнопка подключения -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnConnect"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="8dp"
+        android:layout_marginTop="4dp"
+        android:text="Подключиться"/>
+
     <!-- Поле ввода -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:background="?attr/colorSurface"
+        android:background="#1E1E1E"
         android:padding="8dp"
         android:gravity="center_vertical">
 
@@ -113,17 +118,15 @@
             android:imeOptions="actionSend"
             android:inputType="text"
             android:singleLine="true"
-            android:textColor="?android:attr/textColorPrimary"
+            android:textColor="#EDEDED"
             android:textColorHint="#707070"
             android:textSize="14sp"/>
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRun"
-            style="@style/Widget.Material3.Button.IconButton.Filled"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:contentDescription="Выполнить"
-            app:icon="@drawable/ic_send"/>
+            android:text="▶"/>
     </LinearLayout>
 
 </LinearLayout>
