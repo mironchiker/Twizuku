@@ -1,6 +1,8 @@
 package moe.shizuku.manager.ladb
 
-import android.app.Service
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -13,6 +15,7 @@ import android.view.WindowManager
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
@@ -29,12 +32,13 @@ class PairingOverlayService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
+        startForeground(4201, buildNotification())
+
         windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        else
-            WindowManager.LayoutParams.TYPE_PHONE
+        else WindowManager.LayoutParams.TYPE_PHONE
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -62,22 +66,18 @@ class PairingOverlayService : LifecycleService() {
                 Toast.makeText(this, "Неверный порт", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            if (code.length != 6) {
+            if (code.length != 6 || !code.all { it.isDigit() }) {
                 Toast.makeText(this, "Код — 6 цифр", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 
             lifecycleScope.launch {
                 val ok = withContext(Dispatchers.IO) {
-                    try {
-                        AdbPairing(port = port).pair(code)
-                    } catch (e: Exception) {
-                        false
-                    }
+                    try { AdbPairing(port = port).pair(code) } catch (e: Exception) { false }
                 }
                 Toast.makeText(
                     this@PairingOverlayService,
-                    if (ok) "Сопряжение успешно" else "Ошибка сопряжения",
+                    if (ok) "✓ Сопряжение успешно" else "✗ Ошибка",
                     Toast.LENGTH_LONG
                 ).show()
                 if (ok) stopSelf()
@@ -85,7 +85,6 @@ class PairingOverlayService : LifecycleService() {
         }
 
         btnCancel.setOnClickListener { stopSelf() }
-
         windowManager.addView(overlayView, params)
     }
 
@@ -94,5 +93,22 @@ class PairingOverlayService : LifecycleService() {
         if (::overlayView.isInitialized) {
             try { windowManager.removeView(overlayView) } catch (_: Exception) {}
         }
+    }
+
+    private fun buildNotification(): Notification {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            if (nm.getNotificationChannel("twizuku_pairing") == null) {
+                nm.createNotificationChannel(
+                    NotificationChannel("twizuku_pairing", "ADB Pairing", NotificationManager.IMPORTANCE_LOW)
+                )
+            }
+        }
+        return NotificationCompat.Builder(this, "twizuku_pairing")
+            .setContentTitle("Сопряжение ADB")
+            .setContentText("Введи порт и код")
+            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+            .setOngoing(true)
+            .build()
     }
 }
