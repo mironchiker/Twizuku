@@ -79,6 +79,16 @@
                 <!--<category android:name="android.intent.category.LEANBACK_LAUNCHER" />-->
             </intent-filter>
         </activity>
+
+        <!-- ============================================ -->
+        <!-- НОВАЯ ACTIVITY ДЛЯ LADB                        -->
+        <!-- ============================================ -->
+        <activity
+            android:name=".ladb.LadbActivity"
+            android:exported="false"
+            android:label="LADB"
+            android:theme="@style/AppTheme" />
+
         <activity
             android:name=".management.ApplicationManagementActivity"
             android:label="@string/home_app_management_title" />
