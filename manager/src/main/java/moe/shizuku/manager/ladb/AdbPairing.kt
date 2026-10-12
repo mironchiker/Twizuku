@@ -2,41 +2,74 @@ package moe.shizuku.manager.ladb
 
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.net.InetSocketAddress
 import java.net.Socket
-import java.security.KeyPair
+import java.security.KeyPairGenerator
 import java.security.MessageDigest
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
-/**
- * ADB Wireless Pairing protocol handler (Android 11+).
- * 
- * Протокол: TLS handshake -> exported keying material -> SPAKE2 -> encrypted PeerInfo
- * [citation:4][citation:18]
- */
 class AdbPairing(
     private val host: String = "127.0.0.1",
-    private val port: Int
+    private val port: Int,
+    private val timeoutMs: Int = 10_000
 ) {
 
+    @Throws(Exception::class)
     fun pair(code: String): Boolean {
-        val socket = Socket(host, port)
+        require(code.length == 6) { "Код должен быть из 6 цифр" }
+
+        val socket = Socket()
+        socket.connect(InetSocketAddress(host, port), timeoutMs)
+        socket.soTimeout = timeoutMs
+
         val input = DataInputStream(socket.getInputStream())
         val output = DataOutputStream(socket.getOutputStream())
 
         try {
-            // Отправляем заголовок с хешем кода
-            val codeBytes = code.toByteArray()
-            val hash = MessageDigest.getInstance("SHA-256").digest(codeBytes)
-            
-            // Формат: [hash][code]
-            output.write(hash)
-            output.write(codeBytes)
+            val keyGen = KeyPairGenerator.getInstance("RSA")
+            keyGen.initialize(2048)
+            val keyPair = keyGen.generateKeyPair()
+
+            val codeHash = MessageDigest.getInstance("SHA-256").digest(code.toByteArray())
+            val encrypted = encryptPeerInfo(keyPair.public.encoded, "twizuku@android", codeHash)
+
+            output.writeInt(encrypted.size)
+            output.write(encrypted)
             output.flush()
 
-            // Ждём ответ
-            val response = input.readByte()
-            return response.toInt() == 1
+            return input.readInt() == 0
         } finally {
-            socket.close()
+            try { socket.close() } catch (_: Exception) {}
         }
+    }
+
+    private fun encryptPeerInfo(publicKey: ByteArray, name: String, secret: ByteArray): ByteArray {
+        val key = SecretKeySpec(secret.copyOf(32), "AES")
+        val cipher = Cipher.getInstance("AES/CTR/NoPadding")
+        cipher.init(Cipher.ENCRYPT_MODE, key, IvParameterSpec(ByteArray(16)))
+        return cipher.doFinal(buildPeerInfoPayload(publicKey, name))
+    }
+
+    private fun buildPeerInfoPayload(publicKey: ByteArray, name: String): ByteArray {
+        val nameBytes = name.toByteArray()
+        val buffer = ByteArray(4 + publicKey.size + 4 + nameBytes.size)
+        var offset = 0
+
+        buffer[offset++] = (publicKey.size ushr 24).toByte()
+        buffer[offset++] = (publicKey.size ushr 16).toByte()
+        buffer[offset++] = (publicKey.size ushr 8).toByte()
+        buffer[offset++] = publicKey.size.toByte()
+        System.arraycopy(publicKey, 0, buffer, offset, publicKey.size)
+        offset += publicKey.size
+
+        buffer[offset++] = (nameBytes.size ushr 24).toByte()
+        buffer[offset++] = (nameBytes.size ushr 16).toByte()
+        buffer[offset++] = (nameBytes.size ushr 8).toByte()
+        buffer[offset++] = nameBytes.size.toByte()
+        System.arraycopy(nameBytes, 0, buffer, offset, nameBytes.size)
+
+        return buffer
     }
 }
