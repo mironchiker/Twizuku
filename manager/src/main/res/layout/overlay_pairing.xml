@@ -65,5 +65,4 @@
             android:layout_marginStart="8dp"
             android:text="Спарить"/>
     </LinearLayout>
-
 </LinearLayout>
