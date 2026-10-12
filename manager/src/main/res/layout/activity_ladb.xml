@@ -6,7 +6,6 @@
     android:orientation="vertical"
     android:background="#121212">
 
-    <!-- Топбар -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
@@ -16,7 +15,6 @@
         app:title="LADB"
         app:titleTextColor="#EDEDED"/>
 
-    <!-- Область вывода -->
     <ScrollView
         android:id="@+id/scrollOutput"
         android:layout_width="match_parent"
@@ -37,7 +35,6 @@
             android:textIsSelectable="true"/>
     </ScrollView>
 
-    <!-- Быстрые команды -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -80,7 +77,6 @@
         </LinearLayout>
     </HorizontalScrollView>
 
-    <!-- Кнопка подключения -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnConnect"
         android:layout_width="match_parent"
@@ -89,7 +85,6 @@
         android:layout_marginTop="4dp"
         android:text="Подключиться"/>
 
-    <!-- Поле ввода -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
