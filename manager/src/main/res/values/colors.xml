@@ -24,4 +24,8 @@
 
     <!-- Состояния -->
     <color name="error">#B00020</color>
+
+    <!-- Цвета, которых не хватало для сборки -->
+    <color name="app_color_light">#F5F5F5</color>
+    <color name="app_color_dark">#121212</color>
 </resources>
