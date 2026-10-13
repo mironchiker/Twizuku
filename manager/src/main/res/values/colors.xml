@@ -28,4 +28,8 @@
     <!-- Цвета, которых не хватало для сборки -->
     <color name="app_color_light">#F5F5F5</color>
     <color name="app_color_dark">#121212</color>
+
+    <!-- Цвета для уведомлений Shizuku (нужны AdbPairingService) -->
+    <color name="notification">#4A4A4A</color>
+    <color name="notification_icon">#FFFFFF</color>
 </resources>
