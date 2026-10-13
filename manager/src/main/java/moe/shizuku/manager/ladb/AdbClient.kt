@@ -47,7 +47,7 @@ class AdbClient(
         input = DataInputStream(s.getInputStream())
         output = DataOutputStream(s.getOutputStream())
 
-        sendPacket(A_CNXN, A_VERSION, A_MAXDATA, "host::features=shell_v2,cmd\0".toByteArray())
+        sendPacket(A_CNXN, A_VERSION, A_MAXDATA, "host::features=shell_v2,cmd\u0000".toByteArray())
 
         val pkt = readPacket()
         return when (pkt.cmd) {
@@ -83,16 +83,20 @@ class AdbClient(
         input ?: throw IllegalStateException("Not connected")
         val streamId = localId++
 
-        sendPacket(A_OPEN, streamId, 0, "shell:$command\0".toByteArray())
+        sendPacket(A_OPEN, streamId, 0, "shell:$command\u0000".toByteArray())
 
         val sb = StringBuilder()
         var remoteStreamId = 0
         val deadline = System.currentTimeMillis() + timeoutMs
 
         while (System.currentTimeMillis() < deadline) {
-            val pkt = try { readPacket() }
-            catch (e: SocketTimeoutException) { continue }
-            catch (e: EOFException) { break }
+            val pkt = try {
+                readPacket()
+            } catch (e: SocketTimeoutException) {
+                continue
+            } catch (e: EOFException) {
+                break
+            }
 
             when (pkt.cmd) {
                 A_OKAY -> remoteStreamId = pkt.arg0
@@ -102,10 +106,13 @@ class AdbClient(
                 }
                 A_CLSE -> {
                     if (remoteStreamId != 0) {
-                        try { sendPacket(A_CLSE, streamId, pkt.arg0, ByteArray(0)) } catch (_: Exception) {}
+                        try {
+                            sendPacket(A_CLSE, streamId, pkt.arg0, ByteArray(0))
+                        } catch (_: Exception) {}
                     }
                     return sb.toString()
                 }
+                else -> {}
             }
         }
         return sb.toString().ifEmpty { "(таймаут)" }
@@ -115,7 +122,9 @@ class AdbClient(
         try { input?.close() } catch (_: Exception) {}
         try { output?.close() } catch (_: Exception) {}
         try { socket?.close() } catch (_: Exception) {}
-        socket = null; input = null; output = null
+        socket = null
+        input = null
+        output = null
     }
 
     private fun sendPacket(cmd: Int, arg0: Int, arg1: Int, payload: ByteArray) {
@@ -165,8 +174,11 @@ class AdbClient(
     }
 
     private fun encodePublicKey(pair: KeyPair): ByteArray {
-        val base64 = android.util.Base64.encodeToString(pair.public.encoded, android.util.Base64.NO_WRAP)
-        return "$base64 twizuku@android\0".toByteArray()
+        val base64 = android.util.Base64.encodeToString(
+            pair.public.encoded,
+            android.util.Base64.NO_WRAP
+        )
+        return "$base64 twizuku@android\u0000".toByteArray()
     }
 
     private fun writeInt32LE(arr: ByteArray, off: Int, value: Int) {
@@ -188,5 +200,8 @@ class AdbClient(
 
 private fun String.toAdbInt(): Int {
     require(length == 4) { "ADB command must be 4 chars" }
-    return (this[0].code) or (this[1].code shl 8) or (this[2].code shl 16) or (this[3].code shl 24)
+    return (this[0].code) or
+            (this[1].code shl 8) or
+            (this[2].code shl 16) or
+            (this[3].code shl 24)
 }
