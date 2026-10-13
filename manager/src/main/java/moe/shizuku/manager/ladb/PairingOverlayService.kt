@@ -3,6 +3,7 @@ package moe.shizuku.manager.ladb
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.graphics.PixelFormat
@@ -16,19 +17,22 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
-import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import moe.shizuku.manager.R
 
-class PairingOverlayService : LifecycleService() {
+class PairingOverlayService : Service() {
 
     private lateinit var windowManager: WindowManager
     private lateinit var overlayView: View
 
-    override fun onBind(intent: Intent): IBinder? = null
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -38,7 +42,8 @@ class PairingOverlayService : LifecycleService() {
 
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
-        else WindowManager.LayoutParams.TYPE_PHONE
+        else
+            WindowManager.LayoutParams.TYPE_PHONE
 
         val params = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
@@ -71,13 +76,17 @@ class PairingOverlayService : LifecycleService() {
                 return@setOnClickListener
             }
 
-            lifecycleScope.launch {
+            scope.launch {
                 val ok = withContext(Dispatchers.IO) {
-                    try { AdbPairing(port = port).pair(code) } catch (e: Exception) { false }
+                    try {
+                        AdbPairing(port = port).pair(code)
+                    } catch (e: Exception) {
+                        false
+                    }
                 }
                 Toast.makeText(
                     this@PairingOverlayService,
-                    if (ok) "✓ Сопряжение успешно" else "✗ Ошибка",
+                    if (ok) "✓ Сопряжение успешно" else "✗ Ошибка сопряжения",
                     Toast.LENGTH_LONG
                 ).show()
                 if (ok) stopSelf()
@@ -85,26 +94,33 @@ class PairingOverlayService : LifecycleService() {
         }
 
         btnCancel.setOnClickListener { stopSelf() }
+
         windowManager.addView(overlayView, params)
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        scope.cancel()
         if (::overlayView.isInitialized) {
             try { windowManager.removeView(overlayView) } catch (_: Exception) {}
         }
     }
 
     private fun buildNotification(): Notification {
+        val channelId = "twizuku_pairing"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nm = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            if (nm.getNotificationChannel("twizuku_pairing") == null) {
+            val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            if (nm.getNotificationChannel(channelId) == null) {
                 nm.createNotificationChannel(
-                    NotificationChannel("twizuku_pairing", "ADB Pairing", NotificationManager.IMPORTANCE_LOW)
+                    NotificationChannel(
+                        channelId,
+                        "ADB Pairing",
+                        NotificationManager.IMPORTANCE_LOW
+                    )
                 )
             }
         }
-        return NotificationCompat.Builder(this, "twizuku_pairing")
+        return NotificationCompat.Builder(this, channelId)
             .setContentTitle("Сопряжение ADB")
             .setContentText("Введи порт и код")
             .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
